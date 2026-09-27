@@ -1415,9 +1415,13 @@ export default function Dashboard() {
             {showIntel && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
                 <OsintPanel onSweepVisualize={setSweepData} onScanGeolocate={(target, data) => {
+                  const geoObj = data.geo || {};
+                  const city = data.city || geoObj.city || '';
+                  const country = data.country || geoObj.country || '';
+                  const isp = data.isp || geoObj.isp || geoObj.org || '';
                   setScanTargets(prev => {
                     const existing = prev.filter(t => t.id !== target);
-                    return [{ id: target, timestamp: Date.now(), ...data }, ...existing].slice(0, 10);
+                    return [{ id: target, timestamp: Date.now(), city, country, isp, ...data }, ...existing].slice(0, 10);
                   });
                   setFlyToLocation({ lat: data.lat, lng: data.lng, ts: Date.now() });
                 }} />

@@ -1451,12 +1451,28 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       const p = e.features?.[0]?.properties;
       if (!p) return;
       const coords = e.features[0].geometry.coordinates.slice();
-      popup(coords, `<div style="${pStyle}border:1px solid rgba(255,61,61,0.5);">
-        <div style="color:#FF3D3D;font-size:12px;font-weight:700;margin-bottom:6px;">🎯 TARGET: ${htmlEsc(p.id)}</div>
-        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;">${htmlEsc(p.city || 'Unknown')}, ${htmlEsc(p.country || 'Unknown')} — ${htmlEsc(p.isp || 'Unknown ISP')}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;">
+      let city = p.city;
+      let country = p.country;
+      let isp = p.isp;
+      if (!city || city === 'Unknown') {
+        try {
+          const geoObj = typeof p.geo === 'string' ? JSON.parse(p.geo) : p.geo;
+          if (geoObj) {
+            city = city || geoObj.city;
+            country = country || geoObj.country;
+            isp = isp || geoObj.isp || geoObj.org;
+          }
+        } catch {}
+      }
+      const riskScoreText = p.risk_score !== undefined ? `${p.risk_score}/100` : '0/100';
+      const riskColor = (p.risk_score || 0) >= 50 ? '#FF3D3D' : ((p.risk_score || 0) >= 25 ? '#FF9500' : '#76FF03');
+      popup(coords, `<div style="${pStyle}border:1px solid ${riskColor}80;">
+        <div style="color:${riskColor};font-size:12px;font-weight:700;margin-bottom:6px;">🎯 TARGET: ${htmlEsc(p.id)}</div>
+        <div style="font-size:9px;color:#E8E6E0;margin-bottom:8px;">${htmlEsc(city || 'Unknown')}, ${htmlEsc(country || 'Unknown')} — ${htmlEsc(isp || 'Unknown ISP')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:9px;">
           <div><span style="color:#5C5A54;">TYPE</span><br/><span style="color:#00E5FF;">${(p.type || 'UNKNOWN').toUpperCase()}</span></div>
-          <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
+          <div><span style="color:#5C5A54;">RISK SCORE</span><br/><span style="color:${riskColor};font-weight:bold;">${riskScoreText}</span></div>
+          <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(2)}°, ${coords[0].toFixed(2)}°</span></div>
         </div>
       </div>`);
     });

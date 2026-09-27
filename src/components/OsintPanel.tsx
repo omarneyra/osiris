@@ -62,6 +62,7 @@ const TABS: ToolDef[] = [
   { id: 'phone', label: 'PHONE INTEL', icon: Phone, placeholder: 'Phone number (e.g. +1...)', color: '#FF9500', group: 'identity', blurb: 'Carrier, region and line type' },
   { id: 'fingerprint', label: 'FINGERPRINT', icon: Fingerprint, placeholder: 'Username, email or phone', color: '#3B82F6', group: 'identity', blurb: 'Public profile search, streamed live' },
 
+  { id: 'intel_enrich', label: '360 INTEL', icon: Crosshair, placeholder: 'IP, MMSI, or Callsign (e.g. FORTE11)', color: '#00E5FF', group: 'threat', blurb: '360 OSINT threat enrichment & risk score' },
   { id: 'threats', label: 'THREATS', icon: AlertTriangle, placeholder: 'IP, domain, or hash', color: '#FF9500', group: 'threat', blurb: 'Reputation across feeds' },
   { id: 'leaks', label: 'DATA LEAKS', icon: ShieldAlert, placeholder: 'Email address', color: '#E040FB', group: 'threat', blurb: 'Breach exposure for an address' },
 
@@ -254,6 +255,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       let url = '';
       switch (activeTab) {
 
+        case 'intel_enrich': url = `/api/osint/enrich?target=${encodeURIComponent(query)}`; break;
         case 'dns': url = `/api/osint/dns?domain=${encodeURIComponent(query)}`; break;
         case 'certs': url = `/api/osint/certs?domain=${encodeURIComponent(query)}`; break;
         case 'whois': url = `/api/osint/whois?domain=${encodeURIComponent(query)}`; break;
@@ -323,7 +325,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
             .then(locData => {
               if (locData && locData.geo && locData.geo.lat && locData.geo.lon && onScanGeolocate) {
                 // ip-api returns lat/lon, we pass it up
-                onScanGeolocate(query, { lat: locData.geo.lat, lng: locData.geo.lon, ...locData, type: activeTab });
+                onScanGeolocate(query, { lat: locData.geo.lat, lng: locData.geo.lon, risk_score: parsedData.risk_score, threat_level: parsedData.threat_level, ...locData, ...parsedData, type: activeTab });
               }
             })
             .catch(() => {});
@@ -504,6 +506,30 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
           {r.CNAME && <ResultRow label="CNAME" value={Array.isArray(r.CNAME) ? r.CNAME.join(', ') : r.CNAME} />}
           {r.SOA && <ResultRow label="SOA" value={typeof r.SOA === 'object' ? `${r.SOA.nsname} (${r.SOA.hostmaster})` : r.SOA} />}
           {renderFallbackExcluding(['domain','A','AAAA','MX','NS','TXT','CNAME','SOA','timestamp','cached'])}
+        </div>
+      );
+    }
+
+    // ── 360 INTEL ENRICHMENT ──
+    if (activeTab === 'intel_enrich') {
+      return (
+        <div>
+          <SectionHeader title="360 INTEL ENRICHMENT" icon={Crosshair} color="#00E5FF" />
+          <ResultRow label="Target" value={r.target || query} color="#00E5FF" />
+          <ResultRow label="Type" value={r.type?.toUpperCase()} />
+          <ResultRow label="Risk Score" value={`${r.risk_score}/100`} color={r.risk_score >= 50 ? '#FF3D3D' : '#76FF03'} />
+          <ResultRow label="Threat Level" value={r.threat_level} color={r.threat_level === 'CRITICAL' ? '#FF3D3D' : (r.threat_level === 'HIGH' ? '#FF9500' : '#76FF03')} />
+          {r.indicators?.length > 0 && (
+            <div className="mt-2 p-2 border border-red-500/30 bg-red-500/10 rounded">
+              <span className="text-[11px] font-mono text-red-400 font-bold mb-1 block">THREAT INDICATORS ({r.indicators.length})</span>
+              <div className="flex flex-wrap gap-1">
+                {r.indicators.map((ind: string) => (
+                  <span key={ind} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950/80 border border-red-700/50 text-red-300">{ind}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {renderFallbackExcluding(['target','type','risk_score','threat_level','indicators','details','status','timestamp'])}
         </div>
       );
     }

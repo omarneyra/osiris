@@ -15,24 +15,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden domain' }, { status: 403 });
     }
 
-    const response = await fetch(targetUrl.toString(), { signal: AbortSignal.timeout(15000),
+    const response = await fetch(targetUrl.toString(), {
+      signal: AbortSignal.timeout(10000),
       headers: {
         'Accept': '*/*',
         'User-Agent': 'Osiris-Tile-Proxy/1.0',
       },
-      // Using Next.js fetch cache options to heavily cache tiles locally
       next: {
         revalidate: 31536000, // Cache for 1 year
-      }
+      },
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch tile' }, { status: response.status });
+      return NextResponse.json({ error: 'Tile not available' }, { status: 404 });
     }
 
     const data = await response.arrayBuffer();
-    
-    // Forward the content-type from the upstream response
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
     return new NextResponse(data, {
@@ -43,9 +41,8 @@ export async function GET(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
       },
     });
-
-  } catch (error) {
-    console.error('Tile proxy error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    // Graceful fallback for tile fetching timeouts / network drops to prevent 500 overlays
+    return NextResponse.json({ error: 'Tile unavailable', details: error?.message }, { status: 404 });
   }
 }
