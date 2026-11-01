@@ -67,6 +67,7 @@ describe('mapRecord', () => {
   it('drops inactive, feedless, coordinateless and unplayable rows', () => {
     expect(mapRecord({ ...sampleRow, active: 0 })).toBeNull();
     expect(mapRecord({ ...sampleRow, feed_url: null })).toBeNull();
+    expect(mapRecord({ ...sampleRow, feed_url: 'chile-dgac://1234' })).toBeNull();
     expect(mapRecord({ ...sampleRow, lat: undefined })).toBeNull();
     expect(mapRecord({ ...sampleRow, feed_type: 'rtsp' })).toBeNull();
     expect(mapRecord({ ...sampleRow, id: undefined })).toBeNull();

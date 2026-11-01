@@ -48,6 +48,17 @@ const REGIONS: Record<string, { bounds: Bounds; cap: number }> = {
   /* The Gulf, Iran, Central Asia and the subcontinent — ~950 between them, so
      the cap is never the binding constraint here; it is a guard, not a quota. */
   westasia: { bounds: { minLat: 5, maxLat: 56, minLng: 25, maxLng: 92 }, cap: 600 },
+  /* Latin America and Caribbean — ~990 candidates (includes 157 in Chile).
+     Cap of 1200 ensures all cameras are retained without truncation. */
+  latam: { bounds: { minLat: -56, maxLat: 13.5, minLng: -95, maxLng: -34 }, cap: 1200 },
+  /* North America — US, Canada, Mexico (~64,000 candidates). Sampled evenly. */
+  northam: { bounds: { minLat: 15, maxLat: 72, minLng: -170, maxLng: -50 }, cap: 1500 },
+  /* Europe — ~41,000 candidates across the continent. Sampled evenly. */
+  europe: { bounds: { minLat: 34, maxLat: 72, minLng: -25, maxLng: 45 }, cap: 1500 },
+  /* Oceania — Australia, New Zealand, Pacific islands (~3,100 candidates). */
+  oceania: { bounds: { minLat: -50, maxLat: 0, minLng: 110, maxLng: 180 }, cap: 800 },
+  /* Africa — ~1,800 candidates across North, West, East, Central, and Southern Africa. */
+  africa: { bounds: { minLat: -36, maxLat: 38, minLng: -20, maxLng: 55 }, cap: 800 },
 };
 
 /**
@@ -108,6 +119,7 @@ export function mapRecord(rec: OpenCctvRecord): CctvCamera | null {
 
   const url = rec.feed_url?.trim();
   if (!url) return null;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return null;
   if (coveredElsewhere(url)) return null;
   /* Malaysia's LLM cameras point at the operator's own "camera offline"
      placeholder while a camera is down, and that path 404s. A pin that can
@@ -231,3 +243,8 @@ function loader(region: string, bounds: Bounds, cap: number) {
 export const fetchEastAsiaCameras = cachedSource('eastasia', loader('East Asia', REGIONS.eastasia.bounds, REGIONS.eastasia.cap));
 export const fetchSeAsiaCameras = cachedSource('seasia', loader('Southeast Asia', REGIONS.seasia.bounds, REGIONS.seasia.cap));
 export const fetchWestAsiaCameras = cachedSource('westasia', loader('West & Central Asia', REGIONS.westasia.bounds, REGIONS.westasia.cap));
+export const fetchLatamOpenCctvCameras = cachedSource('opencctv-latam', loader('Latin America (OpenCCTV)', REGIONS.latam.bounds, REGIONS.latam.cap));
+export const fetchNorthAmOpenCctvCameras = cachedSource('opencctv-northam', loader('North America (OpenCCTV)', REGIONS.northam.bounds, REGIONS.northam.cap));
+export const fetchEuropeOpenCctvCameras = cachedSource('opencctv-europe', loader('Europe (OpenCCTV)', REGIONS.europe.bounds, REGIONS.europe.cap));
+export const fetchOceaniaOpenCctvCameras = cachedSource('opencctv-oceania', loader('Oceania (OpenCCTV)', REGIONS.oceania.bounds, REGIONS.oceania.cap));
+export const fetchAfricaOpenCctvCameras = cachedSource('opencctv-africa', loader('Africa (OpenCCTV)', REGIONS.africa.bounds, REGIONS.africa.cap));

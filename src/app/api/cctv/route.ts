@@ -43,7 +43,16 @@ import { fetchGeorgiaCameras } from './georgia';
 import { fetchNorthCarolinaCameras } from './northcarolina';
 import { fetchArizonaCameras } from './arizona';
 import { fetchTexasCameras } from './texas';
-import { fetchEastAsiaCameras, fetchSeAsiaCameras, fetchWestAsiaCameras } from './opencctv';
+import {
+  fetchEastAsiaCameras,
+  fetchSeAsiaCameras,
+  fetchWestAsiaCameras,
+  fetchLatamOpenCctvCameras,
+  fetchNorthAmOpenCctvCameras,
+  fetchEuropeOpenCctvCameras,
+  fetchOceaniaOpenCctvCameras,
+  fetchAfricaOpenCctvCameras,
+} from './opencctv';
 import {
   fetchLatamLiveCameras,
   fetchAfricaLiveCameras,
@@ -527,6 +536,11 @@ const RAW_REGION_FETCHERS: Record<string, RegionFetcher> = {
   'eastasia': fetchEastAsiaCameras,
   'seasia': fetchSeAsiaCameras,
   'westasia': fetchWestAsiaCameras,
+  'opencctv-latam': fetchLatamOpenCctvCameras,
+  'opencctv-northam': fetchNorthAmOpenCctvCameras,
+  'opencctv-europe': fetchEuropeOpenCctvCameras,
+  'opencctv-oceania': fetchOceaniaOpenCctvCameras,
+  'opencctv-africa': fetchAfricaOpenCctvCameras,
   'latam-live': fetchLatamLiveCameras,
   'africa-live': fetchAfricaLiveCameras,
   'europe-live': fetchEuropeLiveCameras,
@@ -876,11 +890,15 @@ function getRegionsForBounds(lat: number, lng: number, radius: number): string[]
 
   // Asia (includes Middle East, SE Asia, overriding parts of china but that's ok they can both load)
   if ((lat > -10 && lat < 60 && lng > 60 && lng < 150)) regions.push('asia');
-  // OpenCCTV across Asia — the countries with no open traffic-authority index
-  // of their own. Split so a viewport over Jakarta does not also pay for Japan.
+  // OpenCCTV across the globe — aggregating 130k+ cameras worldwide
   if (lat > 18 && lat < 46 && lng > 73.5 && lng < 146) regions.push('eastasia');
   if (lat > -11 && lat < 24 && lng > 92 && lng < 130) regions.push('seasia');
   if (lat > 5 && lat < 56 && lng > 25 && lng < 92) regions.push('westasia');
+  if (lat > -56 && lat < 13.5 && lng > -95 && lng < -34) regions.push('opencctv-latam');
+  if (lat > 15 && lat < 72 && lng > -170 && lng < -50) regions.push('opencctv-northam');
+  if (lat > 34 && lat < 72 && lng > -25 && lng < 45) regions.push('opencctv-europe');
+  if (lat > -50 && lat < 0 && lng > 110 && lng < 180) regions.push('opencctv-oceania');
+  if (lat > -36 && lat < 38 && lng > -20 && lng < 55) regions.push('opencctv-africa');
   // Australia explicitly
   if (lat > -45 && lat < -10 && lng > 110 && lng < 155) regions.push('asia');
   // New Zealand (NZTA)
